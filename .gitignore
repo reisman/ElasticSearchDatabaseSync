@@ -1,2 +1,5 @@
 node_modules
 .vscode
+config/default.json
+combined.log
+error.log

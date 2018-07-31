@@ -1,11 +1,20 @@
 const indices = require('./search/indices');
 const data = require('./search/operations');
 const search = require('./search/search');
+const sql = require('./database/sqlserver');
+const config = require('config');
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
-  }
+}
 
+const configuration = config.get('DatabaseConfig');
+
+sql.executeStream(configuration, 'SELECT ID FROM Parts', row => console.log(row))
+    .then(() => console.log('DONE'))
+    .catch(error => console.log(error));
+
+/*
 const exists = indices.exists('parts').then(result=> {
     console.log(result);
     return result;
@@ -16,15 +25,6 @@ const exists = indices.exists('parts').then(result=> {
 }).then(res => {
     indices.createIndex('parts');
 }).then(async res => {
-    /*
-    await data.add('parts', 'Parts', 1, {
-        name: 'Bauteil1',
-        comment: 'This is a good part',
-    });
-    await data.add('parts', 'Parts', 2, {
-        name: 'Bauteil2',
-        comment: 'This is a bad part',
-    });*/
     const rows = [
         {
             id: 1,
@@ -47,3 +47,4 @@ const exists = indices.exists('parts').then(result=> {
 }).catch(error => {
     console.log(error);
 });
+*/
