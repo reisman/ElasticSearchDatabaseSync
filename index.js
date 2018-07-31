@@ -9,42 +9,38 @@ function sleep(ms) {
 }
 
 const configuration = config.get('DatabaseConfig');
+const indexName = 'testindex';
 
-sql.executeStream(configuration, 'SELECT ID FROM Parts', row => console.log(row))
-    .then(() => console.log('DONE'))
-    .catch(error => console.log(error));
-
-/*
-const exists = indices.exists('parts').then(result=> {
-    console.log(result);
-    return result;
-}).then(async res => {
-    if (res) {
-        await indices.deleteIndex('parts')
-    }
-}).then(res => {
-    indices.createIndex('parts');
-}).then(async res => {
-    const rows = [
-        {
-            id: 1,
-            name: 'Bauteil1',
-            comment: 'This is a good part',
-        },{
-            id: 2,
-            name: 'Bauteil2',
-            comment: 'This is a bad part',
+indices
+    .exists(indexName)
+    .then(async exists => {
+        if (exists) {
+            await indices.deleteIndex(indexName);
         }
-    ];
-
-    await data.indexBulk('parts', 'Parts', rows)
-    await sleep(1000);
-}).then(async res => {
-    const result = await search.search('parts', 'Parts', 'Bauteil*');
-    result.hits.hits.forEach(hit => {
-        console.log(hit);
-      });
-}).catch(error => {
-    console.log(error);
-});
-*/
+    })
+    .then(() => {
+        indices.createIndex(indexName);
+    })
+    .then(async () => {
+        const buffer = [];
+        await sql.executeStream(configuration, 'SELECT Id, Name_LOC FROM Parts', row => {
+            buffer.push({
+                id: row['Id'],
+                name: row['Name_LOC'],
+            });
+        });
+        return buffer;
+    })
+    .then(async rows => {
+        data.indexBulk(indexName, 'Parts', rows);
+        await sleep(1000);
+    })
+    .then(async () => {
+        const result = await search.search(indexName, 'Parts', 'Klein*');
+        result.hits.hits.forEach(hit => {
+            console.log(hit);
+        })
+    })
+    .catch(error => {
+        console.log(error);
+    });
