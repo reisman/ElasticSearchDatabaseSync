@@ -1,7 +1,7 @@
 const client = require('./connect');
 
 const search = async (index, type, keyword) => {
-    return await client.search({
+    const result = await client.search({
         index,
         type,
         body: {
@@ -12,6 +12,14 @@ const search = async (index, type, keyword) => {
             },
         },
     });
+
+    const { hits } = result;
+    return hits.hits.map(hit => ({
+        id: hit._id,
+        type: hit._type,
+        score: hit._score,
+        data: hit._source,
+    }));
 };
 
 module.exports = {

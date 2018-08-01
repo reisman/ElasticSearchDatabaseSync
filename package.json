@@ -4,8 +4,10 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
+    "body-parser": "^1.18.3",
     "config": "^2.0.1",
     "elasticsearch": "^15.1.1",
+    "express": "^4.16.3",
     "lodash": "^4.17.10",
     "mssql": "^4.1.0",
     "winston": "^3.0.0"

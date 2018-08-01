@@ -19,6 +19,7 @@ const updateConfig = {
         { type: 'Calculations', columns: ['Id', 'Name_LOC', 'Guid'], identityColumn: 'Id', index: 'caluclations'},
     ]
 }
+
 indices.deleteAll()
     .then(async () => {
         updateConfig.mappingConfiguration.map(m => m.index).forEach(idx => {
