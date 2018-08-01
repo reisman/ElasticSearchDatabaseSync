@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const config = require('config');
 
 const search = require('../search/search');
+const status = require('../search/status');
 const sync = require('../sync/synchronizer');
 const indices = require('../search/indices');
 const { asyncForEach } = require('../utils/utils')
@@ -38,9 +39,22 @@ app.post('/sync', async (req, res) => {
         });
 });
 
+app.post('/update', async (req, res) => {
+    const { index, type, identityColumn, data } = req.body;
+    await sync.update(index, type, identityColumn, data);
+    res.json(true);
+    res.status(200);
+});
+
 app.post('/search', async (req, res) => {
     const { indexName, type, searchString } = req.body;
     const result = await search.search(indexName, type, searchString);
+    res.json(result);
+    res.status(200);
+});
+
+app.get('/status', async (req, res) => {
+    const result = await status.isElasticSearchRunning();
     res.json(result);
     res.status(200);
 });

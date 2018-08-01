@@ -39,6 +39,12 @@ const updateBulk = async configuration => {
     logger.info('Bulk update finished')
 };
 
+const update = async (index, type, identityColumn, data) => {
+    await data.indexBulk(index, type, data, identityColumn);
+    logger.info('Update finished')
+};
+
 module.exports = {
     updateBulk,
+    update,
 };
