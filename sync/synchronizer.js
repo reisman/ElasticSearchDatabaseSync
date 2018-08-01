@@ -1,38 +1,47 @@
-const db = require('./sqlserveraccess');
+const db = require('../database/sqlserver');
 const logger = require('../logging/logging');
+const data = require('../search/operations');
 
-const updateBulk = configuration => {
-    const { mappings, sqlConfiguration } = configuration;
-    
-    const onFinished = result => {
-        logger.info('Finished bulk update');
-    };
-
+const updateBulk = async configuration => {
+    const { mappingConfiguration, sqlConfiguration } = configuration;
+   
     const onError = error => {
         logger.error(error);
     };
 
-    mappings.forEach(mapping => {
-        const { table, columns, identityColumn, index } = mapping;
+    const asyncForEach = async (array, action) => {
+        for (let idx = 0; idx < array.length; idx++) {
+            await action(array[idx])
+        }
+    };
+
+    await asyncForEach(mappingConfiguration, async mapping => {
+        const { type, columns, index, identityColumn } = mapping;
         const joinedColumns = columns.join(',');
-        const query = `SELECT ${joinedColumns} FROM ${table}`;
+        const query = `SELECT ${joinedColumns} FROM ${type}`;
         
         const bufferSize = 100;
-        const buffer = new Array(bufferSize);
+        const buffer = [];
         let idx = 0;
-        const onRow = row => {
-            if (idx < bufferSize - 1) {
-                    
-                buffer = new Array(bufferSize);
-                idx++;
-            } else {
-                buffer[idx] = row;
+        const onRow = async row => {
+            if (idx >= bufferSize - 1) { 
+                await data.indexBulk(index, type, buffer, identityColumn);
+                buffer = [];
                 idx = 0;
             }
+            
+            buffer.push(row);
+            idx++;
         };
 
-        db.executeStream(sqlConfiguration, query, onRow, onFinished, onError);        
+        await db.executeStream(sqlConfiguration, query, onRow, null, onError);        
+
+        if (idx > 0) {
+            await data.indexBulk(index, type, buffer, identityColumn);
+        }
     });
+
+    logger.info('Bulk update finished')
 };
 
 module.exports = {

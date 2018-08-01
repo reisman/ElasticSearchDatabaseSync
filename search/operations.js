@@ -10,12 +10,12 @@ const add = async (index, type, id, body) => {
    });
 };
 
-const indexBulk = async (index, type, data) => {
-    const createHeader = id => ({
+const indexBulk = async (index, type, data, identityKey) => {
+    const createHeader = key => ({
         index: { 
             _index: index,
             _type: type, 
-            _id: id,
+            _id: key,
         }
     });
     
@@ -23,7 +23,7 @@ const indexBulk = async (index, type, data) => {
         return d;
     };
 
-    const body = _.flatMap(data, d => [createHeader(d['id']), createBody(d)])
+    const body = _.flatMap(data, d => [createHeader(d[identityKey]), createBody(d)])
     
     return await client.bulk({
         body,

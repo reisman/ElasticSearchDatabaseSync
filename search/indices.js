@@ -19,8 +19,25 @@ const deleteIndex = async name => {
     });
 };
 
+const deleteAll = async () => {
+    await client.indices.delete({
+        index: '_all'
+    });
+
+    /*
+    await client.cat.indices({
+        h : ['index']
+      }).then(idx => {
+          delete(idx);
+      })
+      */
+    //const idxs = await client.indices.get({});
+    //await client.indices.delete({});
+};
+
 module.exports = {
     createIndex,
     deleteIndex,
     exists,
+    deleteAll,
 };
