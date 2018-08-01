@@ -1,6 +1,7 @@
 const db = require('../database/sqlserver');
 const logger = require('../logging/logging');
 const data = require('../search/operations');
+const { asyncForEach } = require('../utils/utils')
 
 const updateBulk = async configuration => {
     const { mappingConfiguration, sqlConfiguration } = configuration;
@@ -9,24 +10,18 @@ const updateBulk = async configuration => {
         logger.error(error);
     };
 
-    const asyncForEach = async (array, action) => {
-        for (let idx = 0; idx < array.length; idx++) {
-            await action(array[idx])
-        }
-    };
-
     await asyncForEach(mappingConfiguration, async mapping => {
         const { type, columns, index, identityColumn } = mapping;
         const joinedColumns = columns.join(',');
         const query = `SELECT ${joinedColumns} FROM ${type}`;
         
         const bufferSize = 100;
-        const buffer = [];
+        var buffer = [];
         let idx = 0;
-        const onRow = async row => {
-            if (idx >= bufferSize - 1) { 
-                await data.indexBulk(index, type, buffer, identityColumn);
-                buffer = [];
+        const onRow = row => {
+            if (idx >= bufferSize) { 
+                data.indexBulk(index, type, buffer, identityColumn);
+                buffer.length = 0;
                 idx = 0;
             }
             
@@ -37,7 +32,7 @@ const updateBulk = async configuration => {
         await db.executeStream(sqlConfiguration, query, onRow, null, onError);        
 
         if (idx > 0) {
-            await data.indexBulk(index, type, buffer, identityColumn);
+            data.indexBulk(index, type, buffer, identityColumn);
         }
     });
 
