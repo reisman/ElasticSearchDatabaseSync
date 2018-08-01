@@ -1,8 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const config = require('config');
 
 const search = require('../search/search');
 const sync = require('../sync/synchronizer');
+const indices = require('../search/indices');
+const { asyncForEach } = require('../utils/utils')
 
 const app = express();
 app.use(bodyParser.json());
@@ -21,8 +24,18 @@ app.post('/sync', async (req, res) => {
         mappingConfiguration,
     };
 
-    await sync.updateBulk(updateConfig);
-    res.status(200);
+    await indices
+        .deleteAll()
+        .then(async () => {
+            await asyncForEach(updateConfig.mappingConfiguration.map(m => m.index), async idx => {
+                await indices.createIndex(idx);
+            });
+        })
+        .then(async () => await sync.updateBulk(updateConfig))
+        .then(() => {
+            res.json(true);
+            res.status(200);
+        });
 });
 
 app.post('/search', async (req, res) => {
