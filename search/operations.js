@@ -1,13 +1,28 @@
 const client = require('./connect');
 const _ = require('lodash');
+const { asyncForEach } = require('../utils/utils');
 
-const add = async (index, type, id, body) => {
+const addIndex = async (index, type, id, body) => {
     return await client.index({
         index,
         type,
         id,
         body,
    });
+};
+
+const deleteIndex = async (index, type, ids) => {
+    return await client.delete({
+        index,
+        type,
+        id,
+    });
+};
+
+const deleteBulk = async (index, type, ids) => {
+    return await asyncForEach(ids, async (id) => {
+        return await deleteIndex(index, type, id);
+    });
 };
 
 const indexBulk = async (index, type, data, identityKey) => {
@@ -31,6 +46,8 @@ const indexBulk = async (index, type, data, identityKey) => {
 };
 
 module.exports = {
-    add,
+    addIndex,
+    deleteIndex,
     indexBulk,
+    deleteBulk,
 };

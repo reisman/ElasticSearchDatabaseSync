@@ -6,6 +6,7 @@ const search = require('../search/search');
 const status = require('../search/status');
 const sync = require('../sync/synchronizer');
 const indices = require('../search/indices');
+const operations = require('../search/operations');
 const { asyncForEach } = require('../utils/utils')
 
 const app = express();
@@ -39,10 +40,24 @@ app.post('/sync', async (req, res) => {
         });
 });
 
-app.post('/update', async (req, res) => {
+app.post('/index', async (req, res) => {
     const { index, type, identityColumn, data } = req.body;
     await sync.update(index, type, identityColumn, data);
     res.json(true);
+    res.status(200);
+});
+
+app.delete('/index', async (req, res) => {
+    const { index, type, idsToDelete } = req.body;
+    await operations.deleteBulk(index, type, idsToDelete);
+    res.json(true);
+    res.status(200);
+});
+
+app.post('/searchByField', async (req, res) => {
+    const { index, type, field, values } = req.body;
+    const result = await search.searchByField(index, type, field, values);
+    res.json(result);
     res.status(200);
 });
 
